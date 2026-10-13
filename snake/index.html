@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Snake: Temporal Echoes</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      background: #090d16;
+      color: #f8fafc;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 1rem;
+      user-select: none;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 0.75rem;
+    }
+    h1 {
+      font-size: 2.2rem;
+      background: linear-space, linear-gradient(135deg, #38bdf8 0%, #c084fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      font-weight: 800;
+      margin-bottom: 0.25rem;
+    }
+    .subtitle {
+      font-size: 0.85rem;
+      color: #a855f7;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+    .score-board {
+      display: flex;
+      gap: 1.5rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #94a3b8;
+      background: #131b2e;
+      padding: 0.4rem 1.25rem;
+      border-radius: 9999px;
+      border: 1px solid #1e293b;
+    }
+    .score-board span {
+      color: #f1f5f9;
+      font-weight: 700;
+    }
+    .status-panel {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 440px;
+      max-width: 100%;
+      margin-bottom: 0.5rem;
+      font-size: 0.85rem;
+    }
+    .echo-meter {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #c084fc;
+      font-weight: 600;
+    }
+    .meter-bar-container {
+      width: 120px;
+      height: 8px;
+      background: #1e293b;
+      border-radius: 4px;
+      overflow: hidden;
+      border: 1px solid #334155;
+    }
+    .meter-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #818cf8, #c084fc);
+      transition: width 0.1s linear;
+    }
+    .echo-count {
+      color: #f43f5e;
+      font-weight: 700;
+    }
+    .canvas-container {
+      position: relative;
+      border: 3px solid #334155;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 12px 30px -5px rgba(0, 0, 0, 0.7), 0 0 20px rgba(168, 85, 247, 0.2);
+    }
+    canvas {
+      display: block;
+      background: #030712;
+    }
+    .overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(9, 13, 22, 0.88);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(5px);
+      text-align: center;
+      padding: 1.5rem;
+    }
+    .overlay.hidden {
+      display: none;
+    }
+    .overlay h2 {
+      font-size: 2.2rem;
+      margin-bottom: 0.4rem;
+      color: #ef4444;
+      text-shadow: 0 0 12px rgba(239, 68, 68, 0.5);
+    }
+    .overlay p {
+      font-size: 0.95rem;
+      color: #cbd5e1;
+      margin-bottom: 1.25rem;
+      max-width: 320px;
+      line-height: 1.4;
+    }
+    .btn {
+      background: linear-gradient(135deg, #0284c7, #7c3aed);
+      color: white;
+      border: none;
+      padding: 0.65rem 1.6rem;
+      font-size: 1rem;
+      font-weight: 700;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(124, 58, 237, 0.4);
+      transition: all 0.2s ease;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(124, 58, 237, 0.6);
+    }
+    .instructions {
+      margin-top: 0.75rem;
+      font-size: 0.82rem;
+      color: #64748b;
+      text-align: center;
+      max-width: 440px;
+      line-height: 1.5;
+    }
+    .rule-box {
+      margin-top: 0.75rem;
+      background: #0f172a;
+      border: 1px solid #1e293b;
+      border-left: 3px solid #a855f7;
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      color: #94a3b8;
+      max-width: 440px;
+    }
+    .rule-box strong {
+      color: #e2e8f0;
+    }
+    kbd {
+      background: #1e293b;
+      border: 1px solid #475569;
+      border-radius: 4px;
+      padding: 0.1rem 0.35rem;
+      font-size: 0.75rem;
+      color: #94a3b8;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Snake</h1>
+    <div class="subtitle">⌛ Temporal Echoes Edition</div>
+    <div class="score-board">
+      <div>Score: <span id="score">0</span></div>
+      <div>High Score: <span id="high-score">0</span></div>
+    </div>
+  </div>
+
+  <div class="status-panel">
+    <div class="echo-meter">
+      <span>Echo Rift:</span>
+      <div class="meter-bar-container">
+        <div id="meter-bar" class="meter-bar"></div>
+      </div>
+      <span id="meter-timer">10s</span>
+    </div>
+    <div>Active Phantoms: <span id="echo-count" class="echo-count">0</span></div>
+  </div>
+
+  <div class="canvas-container">
+    <canvas id="gameCanvas" width="440" height="440"></canvas>
+    <div id="overlay" class="overlay">
+      <h2 id="overlay-title">Temporal Echoes</h2>
+      <p id="overlay-subtitle">Every 10 seconds, a translucent phantom of your past self emerges to repeat your historical steps. Avoid crashing into your past!</p>
+      <button id="start-btn" class="btn">Enter The Rift</button>
+    </div>
+  </div>
+
+  <div class="rule-box">
+    <strong>Mod Rule:</strong> Every 10 seconds (100 moves), a temporal snapshot from your past materializes as a lethal purple ghost snake. Do not cross paths with your historical self!
+  </div>
+
+  <div class="instructions">
+    Move with <kbd>↑</kbd> <kbd>↓</kbd> <kbd>←</kbd> <kbd>→</kbd> or <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd>. Press <kbd>Space</kbd> to restart.
+  </div>
+
+  <script>
+    // Audio synthesizer using Web Audio API
+    class SoundFX {
+      constructor() {
+        this.ctx = null;
+      }
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (AudioContext) this.ctx = new AudioContext();
+        }
+      }
+      playBeep(freq, duration, type = 'sine') {
+        if (!this.ctx) return;
+        try {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = type;
+          osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+          gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start();
+          osc.stop(this.ctx.currentTime + duration);
+        } catch (e) {}
+      }
+      eat() {
+        this.playBeep(587.33, 0.08); // D5
+        setTimeout(() => this.playBeep(880, 0.1), 50); // A5
+      }
+      echoSpawn() {
+        this.playBeep(329.63, 0.2, 'sawtooth'); // E4
+        setTimeout(() => this.playBeep(659.25, 0.35, 'triangle'), 100); // E5
+      }
+      gameOver() {
+        this.playBeep(220, 0.15, 'sawtooth');
+        setTimeout(() => this.playBeep(146.83, 0.35, 'sawtooth'), 120);
+      }
+    }
+
+    const sound = new SoundFX();
+
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const scoreEl = document.getElementById('score');
+    const highScoreEl = document.getElementById('high-score');
+    const meterBar = document.getElementById('meter-bar');
+    const meterTimer = document.getElementById('meter-timer');
+    const echoCountEl = document.getElementById('echo-count');
+    const overlay = document.getElementById('overlay');
+    const overlayTitle = document.getElementById('overlay-title');
+    const overlaySubtitle = document.getElementById('overlay-subtitle');
+    const startBtn = document.getElementById('start-btn');
+
+    const GRID_SIZE = 20;
+    const TILE_COUNT = canvas.width / GRID_SIZE; // 22x22 grid
+    const GAME_SPEED_MS = 100; // 10 ticks per second
+    const ECHO_INTERVAL_TICKS = 100; // Every 10 seconds (100 ticks)
+
+    let snake = [];
+    let velocity = { x: 0, y: 0 };
+    let nextVelocity = { x: 0, y: 0 };
+    let food = { x: 15, y: 15 };
+    let score = 0;
+    let highScore = parseInt(localStorage.getItem('snake_echoes_high_score') || '0', 10);
+    highScoreEl.textContent = highScore;
+
+    let gameInterval = null;
+    let isRunning = false;
+    let tickCount = 0;
+
+    // History recording: stores snake snapshots array [ [ {x, y}, ... ], ... ]
+    let historySnapshots = [];
+    // Active temporal ghosts: array of { snapshots: [...], currentIndex: 0 }
+    let activeEchoes = [];
+
+    function resetGame() {
+      snake = [
+        { x: 11, y: 11 },
+        { x: 11, y: 12 },
+        { x: 11, y: 13 }
+      ];
+      velocity = { x: 0, y: -1 };
+      nextVelocity = { x: 0, y: -1 };
+      score = 0;
+      tickCount = 0;
+      historySnapshots = [];
+      activeEchoes = [];
+      scoreEl.textContent = score;
+      echoCountEl.textContent = '0';
+      meterBar.style.width = '0%';
+      meterTimer.textContent = '10s';
+      spawnFood();
+    }
+
+    function spawnFood() {
+      while (true) {
+        const x = Math.floor(Math.random() * TILE_COUNT);
+        const y = Math.floor(Math.random() * TILE_COUNT);
+
+        const onSnake = snake.some(s => s.x === x && s.y === y);
+        const onEcho = activeEchoes.some(echo => {
+          const ghostSnake = echo.snapshots[echo.currentIndex] || [];
+          return ghostSnake.some(s => s.x === x && s.y === y);
+        });
+
+        if (!onSnake && !onEcho) {
+          food = { x, y };
+          break;
+        }
+      }
+    }
+
+    function startGame() {
+      sound.init();
+      resetGame();
+      isRunning = true;
+      overlay.classList.add('hidden');
+      if (gameInterval) clearInterval(gameInterval);
+      gameInterval = setInterval(gameLoop, GAME_SPEED_MS);
+    }
+
+    function gameOver(reason = 'Game Over') {
+      isRunning = false;
+      clearInterval(gameInterval);
+      sound.gameOver();
+
+      if (score > highScore) {
+        highScore = score;
+        localStorage.setItem('snake_echoes_high_score', highScore);
+        highScoreEl.textContent = highScore;
+      }
+
+      overlayTitle.textContent = reason;
+      overlayTitle.style.color = '#ef4444';
+      overlaySubtitle.textContent = `Final Score: ${score} | Survived ${Math.floor(tickCount / 10)}s with ${activeEchoes.length} echoes spawned.`;
+      startBtn.textContent = 'Re-enter Rift';
+      overlay.classList.remove('hidden');
+    }
+
+    function gameLoop() {
+      tickCount++;
+      velocity = { ...nextVelocity };
+      const head = { x: snake[0].x + velocity.x, y: snake[0].y + velocity.y };
+
+      // Wall collision
+      if (head.x < 0 || head.x >= TILE_COUNT || head.y < 0 || head.y >= TILE_COUNT) {
+        return gameOver('Boundary Crash');
+      }
+
+      // Self collision
+      if (snake.some(segment => segment.x === head.x && segment.y === head.y)) {
+        return gameOver('Self Collision');
+      }
+
+      // Advance active echoes
+      for (let i = 0; i < activeEchoes.length; i++) {
+        const echo = activeEchoes[i];
+        echo.currentIndex++;
+        // If an echo finishes its recorded lifecycle, it loops back to start of its recording
+        if (echo.currentIndex >= echo.snapshots.length) {
+          echo.currentIndex = 0;
+        }
+      }
+
+      // Check collision with any active ghost snake segment
+      for (const echo of activeEchoes) {
+        const ghostSnake = echo.snapshots[echo.currentIndex] || [];
+        for (const ghostSegment of ghostSnake) {
+          if (head.x === ghostSegment.x && head.y === ghostSegment.y) {
+            return gameOver('Temporal Paradox! Collided with Past Self');
+          }
+        }
+      }
+
+      // Move player snake
+      snake.unshift(head);
+      if (head.x === food.x && head.y === food.y) {
+        score += 10;
+        scoreEl.textContent = score;
+        sound.eat();
+        spawnFood();
+      } else {
+        snake.pop();
+      }
+
+      // Record state snapshot (deep copy of current snake segments)
+      historySnapshots.push(snake.map(s => ({ ...s })));
+
+      // Spawn Temporal Echo every ECHO_INTERVAL_TICKS
+      const progressTicks = tickCount % ECHO_INTERVAL_TICKS;
+      const secondsLeft = Math.ceil((ECHO_INTERVAL_TICKS - progressTicks) / 10);
+      meterBar.style.width = `${(progressTicks / ECHO_INTERVAL_TICKS) * 100}%`;
+      meterTimer.textContent = `${secondsLeft}s`;
+
+      if (tickCount > 0 && progressTicks === 0) {
+        // Create an echo from the past ECHO_INTERVAL_TICKS
+        const recordingStartIndex = historySnapshots.length - ECHO_INTERVAL_TICKS;
+        const pastSequence = historySnapshots.slice(recordingStartIndex);
+        activeEchoes.push({
+          snapshots: pastSequence,
+          currentIndex: 0,
+          id: activeEchoes.length + 1
+        });
+        echoCountEl.textContent = activeEchoes.length;
+        sound.echoSpawn();
+      }
+
+      render();
+    }
+
+    function render() {
+      // Clear background
+      ctx.fillStyle = '#030712';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Cyber Grid
+      ctx.strokeStyle = '#0f172a';
+      ctx.lineWidth = 1;
+      for (let i = 0; i < canvas.width; i += GRID_SIZE) {
+        ctx.beginPath();
+        ctx.moveTo(i, 0);
+        ctx.lineTo(i, canvas.height);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(0, i);
+        ctx.lineTo(canvas.width, i);
+        ctx.stroke();
+      }
+
+      // Draw Temporal Echoes (Ghost Snakes)
+      activeEchoes.forEach((echo) => {
+        const ghostSnake = echo.snapshots[echo.currentIndex] || [];
+        ghostSnake.forEach((segment, idx) => {
+          ctx.save();
+          if (idx === 0) {
+            // Echo Head
+            ctx.fillStyle = 'rgba(232, 121, 249, 0.85)';
+            ctx.shadowColor = '#c084fc';
+            ctx.shadowBlur = 12;
+            ctx.fillRect(
+              segment.x * GRID_SIZE + 2,
+              segment.y * GRID_SIZE + 2,
+              GRID_SIZE - 4,
+              GRID_SIZE - 4
+            );
+            // Glowing eyes
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(segment.x * GRID_SIZE + 5, segment.y * GRID_SIZE + 5, 3, 3);
+            ctx.fillRect(segment.x * GRID_SIZE + 12, segment.y * GRID_SIZE + 5, 3, 3);
+          } else {
+            // Echo Body
+            const alpha = Math.max(0.25, 0.7 - (idx / ghostSnake.length) * 0.4);
+            ctx.fillStyle = `rgba(168, 85, 247, ${alpha})`;
+            ctx.strokeStyle = 'rgba(216, 180, 254, 0.6)';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(
+              segment.x * GRID_SIZE + 2,
+              segment.y * GRID_SIZE + 2,
+              GRID_SIZE - 4,
+              GRID_SIZE - 4
+            );
+            ctx.fillRect(
+              segment.x * GRID_SIZE + 3,
+              segment.y * GRID_SIZE + 3,
+              GRID_SIZE - 6,
+              GRID_SIZE - 6
+            );
+          }
+          ctx.restore();
+        });
+      });
+
+      // Draw Food
+      ctx.save();
+      ctx.fillStyle = '#f43f5e';
+      ctx.shadowColor = '#fb7185';
+      ctx.shadowBlur = 10;
+      ctx.beginPath();
+      const foodCenterX = food.x * GRID_SIZE + GRID_SIZE / 2;
+      const foodCenterY = food.y * GRID_SIZE + GRID_SIZE / 2;
+      ctx.arc(foodCenterX, foodCenterY, GRID_SIZE / 2 - 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Food core highlight
+      ctx.fillStyle = '#ffe4e6';
+      ctx.beginPath();
+      ctx.arc(foodCenterX - 2, foodCenterY - 2, 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+
+      // Draw Player Snake
+      snake.forEach((segment, index) => {
+        ctx.save();
+        if (index === 0) {
+          // Player Head
+          ctx.fillStyle = '#38bdf8';
+          ctx.shadowColor = '#0284c7';
+          ctx.shadowBlur = 10;
+          ctx.fillRect(
+            segment.x * GRID_SIZE + 1,
+            segment.y * GRID_SIZE + 1,
+            GRID_SIZE - 2,
+            GRID_SIZE - 2
+          );
+          // Eyes
+          ctx.fillStyle = '#0f172a';
+          ctx.fillRect(segment.x * GRID_SIZE + 4, segment.y * GRID_SIZE + 4, 3, 3);
+          ctx.fillRect(segment.x * GRID_SIZE + 13, segment.y * GRID_SIZE + 4, 3, 3);
+        } else {
+          // Player Body
+          ctx.fillStyle = index % 2 === 0 ? '#0284c7' : '#0369a1';
+          ctx.fillRect(
+            segment.x * GRID_SIZE + 1,
+            segment.y * GRID_SIZE + 1,
+            GRID_SIZE - 2,
+            GRID_SIZE - 2
+          );
+        }
+        ctx.restore();
+      });
+    }
+
+    // Input Handling
+    window.addEventListener('keydown', (e) => {
+      const key = e.key;
+
+      if (key === ' ' || key === 'Spacebar') {
+        if (!isRunning) {
+          startGame();
+          e.preventDefault();
+        }
+        return;
+      }
+
+      const goingUp = velocity.y === -1;
+      const goingDown = velocity.y === 1;
+      const goingLeft = velocity.x === -1;
+      const goingRight = velocity.x === 1;
+
+      if ((key === 'ArrowUp' || key === 'w' || key === 'W') && !goingDown) {
+        nextVelocity = { x: 0, y: -1 };
+        e.preventDefault();
+      } else if ((key === 'ArrowDown' || key === 's' || key === 'S') && !goingUp) {
+        nextVelocity = { x: 0, y: 1 };
+        e.preventDefault();
+      } else if ((key === 'ArrowLeft' || key === 'a' || key === 'A') && !goingRight) {
+        nextVelocity = { x: -1, y: 0 };
+        e.preventDefault();
+      } else if ((key === 'ArrowRight' || key === 'd' || key === 'D') && !goingLeft) {
+        nextVelocity = { x: 1, y: 0 };
+        e.preventDefault();
+      }
+    });
+
+    startBtn.addEventListener('click', startGame);
+
+    // Initial render
+    resetGame();
+    render();
+  </script>
+</body>
+</html>
